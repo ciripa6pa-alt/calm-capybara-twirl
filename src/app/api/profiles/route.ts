@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
         first_name: first_name || null,
         last_name: last_name || null,
         avatar_url: avatar_url || null,
-        // integrated with Supabase: remove non-schema field 'status'
+        status: 'online',
         last_seen_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })

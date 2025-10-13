@@ -73,17 +73,19 @@ export default function RootLayout({
         <meta name="msapplication-TileColor" content="#000000" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+      >
         <AuthProvider>
           <TransactionModalProvider>
-            <div className="min-h-screen pb-16 md:pb-0">
+            <ServiceWorkerRegistration />
+            <NotificationManager />
+            <PWAInstaller />
+            <div className="min-h-screen">
               {children}
             </div>
             <BottomNavigation />
             <Toaster />
-            <PWAInstaller />
-            <ServiceWorkerRegistration />
-            <NotificationManager />
           </TransactionModalProvider>
         </AuthProvider>
       </body>

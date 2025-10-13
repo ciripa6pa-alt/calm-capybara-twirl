@@ -5,8 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
-import { useAuth } from '@/contexts/AuthContext'
 import { 
   BarChart, 
   Bar, 
@@ -43,38 +41,60 @@ interface CategoryData {
 }
 
 export default function LaporanPage() {
-  const { user } = useAuth()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState('month')
   const [reportType, setReportType] = useState('all')
 
   useEffect(() => {
-    const fetchReportData = async () => {
-      if (!user) return
-
-      try {
-        // Fetch transactions from Supabase based on period
-        const response = await fetch(`/api/transactions?userId=${user.id}&period=${period}`)
-        const result = await response.json()
-
-        if (response.ok && result.data) {
-          setTransactions(result.data)
-        } else {
-          // Fallback to empty array if API fails
-          setTransactions([])
-        }
-      } catch (error) {
-        console.error('Error fetching report data:', error)
-        // Fallback to empty array
-        setTransactions([])
-      } finally {
-        setLoading(false)
+    const mockTransactions: Transaction[] = [
+      {
+        id: '1',
+        amount: 2500000,
+        type: 'income',
+        category: 'Penjualan',
+        description: 'Penjualan produk A',
+        created_at: new Date(Date.now() - 86400000).toISOString()
+      },
+      {
+        id: '2',
+        amount: 1500000,
+        type: 'expense',
+        category: 'Operasional',
+        description: 'Biaya sewa toko',
+        created_at: new Date(Date.now() - 172800000).toISOString()
+      },
+      {
+        id: '3',
+        amount: 3200000,
+        type: 'income',
+        category: 'Penjualan',
+        description: 'Penjualan produk B',
+        created_at: new Date(Date.now() - 259200000).toISOString()
+      },
+      {
+        id: '4',
+        amount: 800000,
+        type: 'expense',
+        category: 'Marketing',
+        description: 'Iklan online',
+        created_at: new Date(Date.now() - 345600000).toISOString()
+      },
+      {
+        id: '5',
+        amount: 1800000,
+        type: 'income',
+        category: 'Jasa',
+        description: 'Jasa konsultasi',
+        created_at: new Date(Date.now() - 432000000).toISOString()
       }
-    }
+    ]
 
-    fetchReportData()
-  }, [user, period])
+    setTimeout(() => {
+      setTransactions(mockTransactions)
+      setLoading(false)
+    }, 1000)
+  }, [])
 
   const getTotalIncome = () => {
     return transactions
@@ -152,12 +172,11 @@ export default function LaporanPage() {
   const monthlyData = getMonthlyData()
 
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50">
-        <PageHeader 
-          title="Laporan Keuangan" 
-          subtitle="Analisis dan ringkasan transaksi keuangan"
-        />
+    <div className="min-h-screen bg-gray-50">
+      <PageHeader 
+        title="Laporan Keuangan" 
+        subtitle="Analisis dan ringkasan transaksi keuangan"
+      />
 
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -349,7 +368,6 @@ export default function LaporanPage() {
           </CardContent>
         </Card>
       </div>
-      </div>
-    </ProtectedRoute>
+    </div>
   )
 }

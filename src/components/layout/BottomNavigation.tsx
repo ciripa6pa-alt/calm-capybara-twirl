@@ -5,36 +5,26 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useTransactionModal } from '@/components/transaction/TransactionModalProvider'
-import { useAuth } from '@/contexts/AuthContext'
 import { 
   Home, 
   History, 
   MessageSquare, 
   BarChart3, 
   Plus,
-  Wallet,
-  LogIn
+  Wallet
 } from 'lucide-react'
+
+const navigation = [
+  { name: 'Beranda', href: '/', icon: Home },
+  { name: 'Riwayat', href: '/riwayat', icon: History },
+  { name: 'Tambah', href: '#', icon: Plus, isAction: true },
+  { name: 'Pesan', href: '/pesan', icon: MessageSquare },
+  { name: 'Laporan', href: '/laporan', icon: BarChart3 },
+]
 
 export function BottomNavigation() {
   const pathname = usePathname()
   const { openModal } = useTransactionModal()
-  const { user } = useAuth()
-
-  // Navigation items berdasarkan status autentikasi
-  const authenticatedNavigation = [
-    { name: 'Beranda', href: '/', icon: Home, isAction: false },
-    { name: 'Riwayat', href: '/riwayat', icon: History, isAction: false },
-    { name: 'Tambah', href: '#', icon: Plus, isAction: true },
-    { name: 'Pesan', href: '/pesan', icon: MessageSquare, isAction: false },
-    { name: 'Laporan', href: '/laporan', icon: BarChart3, isAction: false },
-  ]
-
-  const unauthenticatedNavigation = [
-    { name: 'Login', href: '/login', icon: LogIn, isAction: false },
-  ]
-
-  const navigation = user ? authenticatedNavigation : unauthenticatedNavigation
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">

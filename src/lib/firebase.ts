@@ -1,7 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { getMessaging, getToken, onMessage } from 'firebase/messaging'
 
-// Check if all required Firebase config variables are available
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -11,43 +10,22 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 }
 
-// Validate Firebase config
-const isFirebaseConfigValid = () => {
-  return firebaseConfig.apiKey && 
-         firebaseConfig.projectId && 
-         firebaseConfig.appId && 
-         firebaseConfig.messagingSenderId
-}
+const app = initializeApp(firebaseConfig)
 
-let app: any = null
 let messaging: any = null
 
-// Initialize Firebase only if config is valid and in production browser
+// Initialize messaging only if supported
 try {
-  if (isFirebaseConfigValid()) {
-    app = initializeApp(firebaseConfig)
-    // Initialize messaging only if supported, in browser, and in production
-    if (
-      typeof window !== 'undefined' &&
-      'serviceWorker' in navigator &&
-      process.env.NODE_ENV === 'production'
-    ) {
-      messaging = getMessaging(app)
-    }
-  } else {
-    console.warn('Firebase configuration is incomplete. Firebase features will be disabled.')
+  if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+    messaging = getMessaging(app)
   }
 } catch (error) {
-  console.warn('Firebase initialization failed:', error)
+  console.warn('Firebase messaging not supported:', error)
 }
 
 export const requestNotificationPermission = async () => {
   try {
     if (!messaging) {
-      if (process.env.NODE_ENV !== 'production') {
-        // silent in dev
-        return null
-      }
       console.warn('Firebase messaging not available')
       return null
     }
@@ -59,18 +37,10 @@ export const requestNotificationPermission = async () => {
       })
       return token
     } else {
-      if (process.env.NODE_ENV !== 'production') {
-        // silent in dev
-        return null
-      }
       console.log('Notification permission denied')
       return null
     }
   } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      // silent in dev
-      return null
-    }
     console.error('Error requesting notification permission:', error)
     return null
   }
@@ -78,7 +48,7 @@ export const requestNotificationPermission = async () => {
 
 export const onMessageListener = () => {
   if (!messaging) {
-    return Promise.resolve(() => {})
+    return Promise.resolve(null)
   }
 
   return new Promise((resolve) => {

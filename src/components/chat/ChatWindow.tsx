@@ -136,8 +136,8 @@ export function ChatWindow({ contact, currentUserId, messages, onSendMessage, on
   }
 
   return (
-    <div className="flex h-full w-full flex-col pb-16 md:pb-0">
-      {/* Header */}
+    <div className="flex flex-col h-screen bg-white">
+      {/* Chat Header - Sticky */}
       <div className="hidden md:flex items-center gap-3 p-4 border-b border-gray-200 bg-white sticky top-0 z-10">
         <div className="relative">
           <Avatar>

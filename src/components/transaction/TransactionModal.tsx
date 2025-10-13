@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,6 +10,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useAuth } from '@/contexts/AuthContext'
+import { useTransactions } from '@/hooks/use-supabase'
 import { 
   ArrowUpRight, 
   ArrowDownRight, 
@@ -18,7 +20,8 @@ import {
   Smartphone,
   Building,
   DollarSign,
-  X
+  X,
+  Loader2
 } from 'lucide-react'
 
 interface TransactionModalProps {
@@ -28,6 +31,8 @@ interface TransactionModalProps {
 }
 
 export function TransactionModal({ isOpen, onClose, initialType }: TransactionModalProps) {
+  const { user } = useAuth()
+  const { addTransaction } = useTransactions()
   const [transactionType, setTransactionType] = useState<'income' | 'expense'>(initialType || 'income')
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
@@ -35,6 +40,8 @@ export function TransactionModal({ isOpen, onClose, initialType }: TransactionMo
   const [paymentMethod, setPaymentMethod] = useState('')
   const [fundSource, setFundSource] = useState('')
   const [transactionDate, setTransactionDate] = useState(new Date().toISOString().split('T')[0])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (initialType) {
@@ -42,33 +49,56 @@ export function TransactionModal({ isOpen, onClose, initialType }: TransactionMo
     }
   }, [initialType])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Simulasi penyimpanan transaksi
-    const transaction = {
-      id: Date.now().toString(),
-      type: transactionType,
-      amount: parseFloat(amount),
-      description,
-      category,
-      paymentMethod,
-      fundSource,
-      transactionDate,
-      createdAt: new Date().toISOString()
+    if (!user) {
+      setError('User not authenticated')
+      return
     }
 
-    console.log('Transaction saved:', transaction)
-    
-    // Reset form
-    setAmount('')
-    setDescription('')
-    setCategory('')
-    setPaymentMethod('')
-    setFundSource('')
-    setTransactionDate(new Date().toISOString().split('T')[0])
-    
-    onClose()
+    if (!amount || !description || !category) {
+      setError('Mohon lengkapi semua field yang wajib diisi')
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      // Convert amount from formatted string to number
+      const numericAmount = parseFloat(amount.replace(/\D/g, ''))
+      
+      if (numericAmount <= 0) {
+        throw new Error('Jumlah harus lebih dari 0')
+      }
+
+      const transaction = {
+        user_id: user.id,
+        type: transactionType,
+        amount: numericAmount,
+        description,
+        category,
+        transaction_date: transactionDate,
+      }
+
+      await addTransaction(transaction)
+      
+      // Reset form
+      setAmount('')
+      setDescription('')
+      setCategory('')
+      setPaymentMethod('')
+      setFundSource('')
+      setTransactionDate(new Date().toISOString().split('T')[0])
+      
+      onClose()
+    } catch (error: any) {
+      console.error('Error saving transaction:', error)
+      setError(error.message || 'Gagal menyimpan transaksi')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const formatCurrency = (value: string) => {
@@ -118,7 +148,7 @@ export function TransactionModal({ isOpen, onClose, initialType }: TransactionMo
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {transactionType === 'income' ? (
@@ -133,9 +163,6 @@ export function TransactionModal({ isOpen, onClose, initialType }: TransactionMo
               </>
             )}
           </DialogTitle>
-          <DialogDescription>
-            Masukkan detail transaksi {transactionType === 'income' ? 'pemasukan' : 'pengeluaran'} Anda.
-          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -259,6 +286,13 @@ export function TransactionModal({ isOpen, onClose, initialType }: TransactionMo
             />
           </div>
 
+          {/* Error Display */}
+          {error && (
+            <div className="text-sm text-red-600 bg-red-50 p-3 rounded">
+              {error}
+            </div>
+          )}
+
           {/* Preview */}
           {amount && (
             <Card className="bg-gray-50">
@@ -275,7 +309,7 @@ export function TransactionModal({ isOpen, onClose, initialType }: TransactionMo
 
           {/* Action Buttons */}
           <div className="flex gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1" disabled={loading}>
               Batal
             </Button>
             <Button 
@@ -285,8 +319,16 @@ export function TransactionModal({ isOpen, onClose, initialType }: TransactionMo
                   ? 'bg-green-600 hover:bg-green-700' 
                   : 'bg-red-600 hover:bg-red-700'
               }`}
+              disabled={loading}
             >
-              Simpan
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                'Simpan'
+              )}
             </Button>
           </div>
         </form>
