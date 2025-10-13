@@ -70,6 +70,9 @@ const nextConfig: NextConfig = {
       },
     ]
   },
+  
+  // Server external packages for Next.js 15
+  serverExternalPackages: ['@prisma/client'],
 };
 
 export default nextConfig;
