@@ -1,3 +1,7 @@
+import { useState, useEffect } from 'react'
+import { supabase } from '@/lib/supabase'
+import type { Message, Transaction } from '@/lib/supabase'
+
 export function useMessages() {
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
@@ -11,7 +15,7 @@ export function useMessages() {
       const { data, error } = await supabase
         .from('messages')
         .select('*')
-        .order('timestamp', { ascending: true }) // urut dari lama ke baru
+        .order('timestamp', { ascending: true })
 
       if (error) throw error
 
@@ -61,7 +65,6 @@ export function useMessages() {
   useEffect(() => {
     fetchMessages()
 
-    // ✅ Tambahkan listener realtime agar chat otomatis update
     const channel = supabase
       .channel('messages-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, (payload) => {
@@ -88,5 +91,104 @@ export function useMessages() {
     error,
     addMessage,
     deleteAllMessages,
+  }
+}
+
+export function useTransactions() {
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchTransactions = async (userId?: string) => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      let query = supabase
+        .from('transactions')
+        .select('*')
+        .order('transaction_date', { ascending: false })
+
+      if (userId) {
+        query = query.eq('user_id', userId)
+      }
+
+      const { data, error } = await query
+
+      if (error) throw error
+
+      setTransactions(data || [])
+    } catch (err: any) {
+      console.error('Error fetching transactions:', err)
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const addTransaction = async (transaction: Omit<Transaction, 'id' | 'created_at' | 'updated_at'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .insert(transaction)
+        .select()
+        .single()
+
+      if (error) throw error
+
+      setTransactions(prev => [data, ...prev])
+      return data
+    } catch (err: any) {
+      console.error('Error adding transaction:', err)
+      throw err
+    }
+  }
+
+  const deleteTransaction = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+
+      setTransactions(prev => prev.filter(t => t.id !== id))
+    } catch (err: any) {
+      console.error('Error deleting transaction:', err)
+      throw err
+    }
+  }
+
+  useEffect(() => {
+    fetchTransactions()
+
+    const channel = supabase
+      .channel('transactions-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          setTransactions((prev) => [payload.new as Transaction, ...prev])
+        } else if (payload.eventType === 'DELETE') {
+          setTransactions((prev) => prev.filter((t) => t.id !== payload.old.id))
+        } else if (payload.eventType === 'UPDATE') {
+          setTransactions((prev) =>
+            prev.map((t) => (t.id === payload.new.id ? (payload.new as Transaction) : t))
+          )
+        }
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
+  return {
+    transactions,
+    loading,
+    error,
+    fetchTransactions,
+    addTransaction,
+    deleteTransaction,
   }
 }
