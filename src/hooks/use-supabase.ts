@@ -8,6 +8,11 @@ export function useMessages() {
   const [error, setError] = useState<string | null>(null)
 
   const fetchMessages = async () => {
+    if (!supabase) {
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
       setError(null)
@@ -29,6 +34,10 @@ export function useMessages() {
   }
 
   const addMessage = async (message: Omit<Message, 'id' | 'created_at' | 'updated_at'>) => {
+    if (!supabase) {
+      throw new Error('Supabase not configured')
+    }
+
     try {
       const fullMessage = {
         ...message,
@@ -52,6 +61,10 @@ export function useMessages() {
   }
 
   const deleteAllMessages = async () => {
+    if (!supabase) {
+      throw new Error('Supabase not configured')
+    }
+
     try {
       const { error } = await supabase.from('messages').delete().neq('id', 'placeholder')
       if (error) throw error
@@ -64,6 +77,8 @@ export function useMessages() {
 
   useEffect(() => {
     fetchMessages()
+
+    if (!supabase) return
 
     const channel = supabase
       .channel('messages-changes')
@@ -81,7 +96,9 @@ export function useMessages() {
       .subscribe()
 
     return () => {
-      supabase.removeChannel(channel)
+      if (supabase) {
+        supabase.removeChannel(channel)
+      }
     }
   }, [])
 
@@ -100,6 +117,11 @@ export function useTransactions() {
   const [error, setError] = useState<string | null>(null)
 
   const fetchTransactions = async (userId?: string) => {
+    if (!supabase) {
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
       setError(null)
@@ -127,6 +149,10 @@ export function useTransactions() {
   }
 
   const addTransaction = async (transaction: Omit<Transaction, 'id' | 'created_at' | 'updated_at'>) => {
+    if (!supabase) {
+      throw new Error('Supabase not configured')
+    }
+
     try {
       const { data, error } = await supabase
         .from('transactions')
@@ -145,6 +171,10 @@ export function useTransactions() {
   }
 
   const deleteTransaction = async (id: string) => {
+    if (!supabase) {
+      throw new Error('Supabase not configured')
+    }
+
     try {
       const { error } = await supabase
         .from('transactions')
@@ -163,6 +193,8 @@ export function useTransactions() {
   useEffect(() => {
     fetchTransactions()
 
+    if (!supabase) return
+
     const channel = supabase
       .channel('transactions-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, (payload) => {
@@ -179,7 +211,9 @@ export function useTransactions() {
       .subscribe()
 
     return () => {
-      supabase.removeChannel(channel)
+      if (supabase) {
+        supabase.removeChannel(channel)
+      }
     }
   }, [])
 
