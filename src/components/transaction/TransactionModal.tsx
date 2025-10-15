@@ -95,7 +95,14 @@ export function TransactionModal({ isOpen, onClose, initialType }: TransactionMo
       onClose()
     } catch (error: any) {
       console.error('Error saving transaction:', error)
-      setError(error.message || 'Gagal menyimpan transaksi')
+      const errorMessage = error.message || 'Gagal menyimpan transaksi'
+      
+      // Check if error is due to missing Supabase configuration
+      if (errorMessage.includes('Supabase not configured')) {
+        setError('Database belum dikonfigurasi. Silakan tambahkan kredensial Supabase di Replit Secrets atau gunakan versi demo di /simple')
+      } else {
+        setError(errorMessage)
+      }
     } finally {
       setLoading(false)
     }

@@ -41,8 +41,14 @@ export default function PesanPage() {
         timestamp: new Date().toISOString(),
         read: false,
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending message:', error)
+      // Show user-friendly error
+      if (error.message?.includes('Supabase not configured')) {
+        alert('Database belum dikonfigurasi. Silakan tambahkan kredensial Supabase di Replit Secrets.')
+      } else {
+        alert('Gagal mengirim pesan: ' + (error.message || 'Terjadi kesalahan'))
+      }
     }
   }
 
