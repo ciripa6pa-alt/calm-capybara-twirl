@@ -6,14 +6,24 @@ The application includes both a simple demo version (client-side only) and a ful
 
 # Recent Changes
 
-**October 15, 2025 - Replit Migration:**
+**October 15, 2025 - Replit Migration & Stability Fixes:**
 - Migrated from Vercel to Replit platform
 - Configured dev and production servers to bind to 0.0.0.0:5000 for Replit compatibility
 - Removed X-Frame-Options header to allow Replit iframe display
 - Added cache control headers to prevent caching issues
 - Fixed missing useTransactions hook in use-supabase.ts with full CRUD and realtime support
+- Fixed null safety issues in Supabase hooks (useMessages, useTransactions)
+- Enhanced error handling in TransactionModal and chat page with user-friendly messages
+- Added helpful error messages when Supabase is not configured (directs users to /simple demo)
 - Configured autoscale deployment for production
 - Environment variables now managed through Replit Secrets (see .env.example for required keys)
+
+**How to Use:**
+1. **Demo Mode (No Setup Required):** Visit `/simple` to use a client-side version with localStorage
+2. **Full Version (Requires Supabase):** Add credentials to Replit Secrets:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   Then access the full app with authentication, real-time sync, and all features
 
 # User Preferences
 
